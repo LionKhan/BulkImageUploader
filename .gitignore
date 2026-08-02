@@ -1,0 +1,28 @@
+# Visual Studio
+.vs/
+.vscode/
+bin/
+obj/
+*.user
+*.userprefs
+*.suo
+*.sln.docstates
+Debug/
+Release/
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+
+# Dependencies
+node_modules/
+packages/
+
+# Environment
+.env
+.local
+
+# Logs
+*.log
