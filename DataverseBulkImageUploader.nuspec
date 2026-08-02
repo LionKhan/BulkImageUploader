@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>DataverseBulkImageUploader.XrmToolBox</id>
+    <version>1.2.8</version>
+    <title>Dataverse Bulk Image Uploader for XrmToolBox</title>
+    <authors>Sherkhan Lodhi</authors>
+    <owners>Sherkhan Lodhi</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectUrl>https://github.com/sherkhanlodhi/DataverseBulkImageUploader</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/sherkhanlodhi/DataverseBulkImageUploader/main/icon.png</iconUrl>
+    <description>Enterprise-grade XrmToolBox plugin for high-performance bulk photo and logo uploads to Microsoft Dataverse (Dynamics 365 / Power Apps) entityimage attributes. Features intelligent fuzzy filename mapping, multithreaded throughput, dry-run simulation, and batch reporting.</description>
+    <summary>Bulk upload photos and images to Dataverse entityimage columns directly inside XrmToolBox.</summary>
+    <releaseNotes>v1.2.8 Release: Added multi-threaded batch upload engine, fuzzy normalization, and full XrmToolBox Tool Library integration.</releaseNotes>
+    <copyright>Copyright 2026 Sherkhan Lodhi</copyright>
+    <tags>XrmToolBoxPackage XrmToolBox Dataverse Dynamics365 PowerApps EntityImage BulkUpload ImageUploader PowerPlatform</tags>
+    <dependencies>
+      <dependency id="XrmToolBox" version="1.2023.10.67" />
+      <dependency id="Microsoft.PowerPlatform.Dataverse.Client" version="1.1.32" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="bin/Release/DataverseBulkImageUploader.dll" target="lib/net48/Plugins" />
+  </files>
+</package>
