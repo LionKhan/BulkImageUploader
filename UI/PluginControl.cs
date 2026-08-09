@@ -1,18 +1,19 @@
+using Dataverse.BulkImageUploader.Models;
+using Dataverse.BulkImageUploader.Services;
+using Dataverse.BulkImageUploader.Settings;
+using McTools.Xrm.Connection;
+using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using McTools.Xrm.Connection;
-using Microsoft.Xrm.Sdk;
 using XrmToolBox.Extensibility;
-using Dataverse.BulkImageUploader.Models;
-using Dataverse.BulkImageUploader.Services;
-using Dataverse.BulkImageUploader.Settings;
 
 namespace Dataverse.BulkImageUploader
 {
@@ -33,13 +34,16 @@ namespace Dataverse.BulkImageUploader
             try
             {
                 InitializeComponent();
+               
+
+                
             }
             catch (Exception ex)
             {
                 throw ex;
             }
         }
-
+        
         private void PluginControl_Load(object sender, EventArgs e)
         {
             try

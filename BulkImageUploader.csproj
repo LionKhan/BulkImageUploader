@@ -1,20 +1,43 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <AssemblyName>BulkImageUploader</AssemblyName>
     <RootNamespace>Dataverse.BulkImageUploader</RootNamespace>
-    <Version>1.2.8.0</Version>
-    <Authors>Sherkhan Lodhi</Authors>
-    <Company>Dataverse Admin Tools</Company>
+    <Version>1.0.0.0</Version>
+    <Authors>SherMuhammad</Authors>
+    <Company>SherMuhammad</Company>
     <Product>Bulk Image Uploader Plugin for XrmToolBox</Product>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <AssemblyTitle>BulkImageUploader</AssemblyTitle>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Resources\xrmlogo.ico" />
+    <None Remove="Resources\xrmlogo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\xrmlogo.ico" />
+    <EmbeddedResource Include="Resources\xrmlogo.png" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="XrmToolBoxPackage" Version="1.2023.10.67" />
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.1.32" />
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.52" />
     <PackageReference Include="System.ComponentModel.Composition" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>
