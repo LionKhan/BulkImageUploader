@@ -1,8 +1,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.8.34330.188
+# Visual Studio Version 18
+VisualStudioVersion = 18.8.12023.21 stable
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataverseBulkImageUploader", "DataverseBulkImageUploader.csproj", "{A72C8E56-4B11-4E8F-9D4A-019F37D9254B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BulkImageUploader", "BulkImageUploader.csproj", "{A72C8E56-4B11-4E8F-9D4A-019F37D9254B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

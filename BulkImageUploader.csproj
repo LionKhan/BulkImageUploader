@@ -1,13 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
-    <AssemblyName>DataverseBulkImageUploader</AssemblyName>
+    <AssemblyName>BulkImageUploader</AssemblyName>
     <RootNamespace>Dataverse.BulkImageUploader</RootNamespace>
     <Version>1.2.8.0</Version>
     <Authors>Sherkhan Lodhi</Authors>
     <Company>Dataverse Admin Tools</Company>
     <Product>Bulk Image Uploader Plugin for XrmToolBox</Product>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <AssemblyTitle>BulkImageUploader</AssemblyTitle>
   </PropertyGroup>
 
   <ItemGroup>
