@@ -21,6 +21,11 @@ namespace Dataverse.BulkImageUploader.Models
     {
         public string FilePath { get; set; }
         public string FileName { get; set; }
+        public string ImageName => FileName;
+        public string RecordId => MatchingRecord != null ? MatchingRecord.Id.ToString() : "No Match";
+        public string RecordName => MatchingRecord != null && MatchingRecord.Contains("fullname")
+            ? MatchingRecord["fullname"].ToString()
+            : (MatchingRecord != null && MatchingRecord.Contains("name") ? MatchingRecord["name"].ToString() : "");
         public long FileSize { get; set; }
         public string ExtractedMappingValue { get; set; }
         public MappingStatus Status { get; set; }
@@ -63,10 +68,17 @@ namespace Dataverse.BulkImageUploader.Models
         public int Processed { get; set; }
         public int PercentComplete { get; set; }
         public double SpeedFilesPerSec { get; set; }
+        
         public string EstimatedRemainingTime { get; set; }
         public int Succeeded { get; set; }
         public int Failed { get; set; }
         public string CurrentFileName { get; set; }
+
+    }
+    public class MappingFieldOption
+    {
+        public string LogicalName { get; set; }
+        public string DisplayName { get; set; }
     }
 
     public class UploadSummaryResult

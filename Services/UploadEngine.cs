@@ -20,16 +20,15 @@ namespace Dataverse.BulkImageUploader.Services
             _dataverseService = dataverseService;
             _logger = logger;
         }
-
-        public async Task<UploadSummaryResult> ProcessUploadAsync(
-            List<ImageMappingItem> items,
-            string entityName,
-            string imageColumnName,
-            int batchSize,
-            bool resizeBeforeUpload,
-            int maxResizeWidth,
-            IProgress<UploadProgressState> progress,
-            CancellationToken token)
+        public UploadSummaryResult ProcessUploadsync(
+    List<ImageMappingItem> items,
+    string entityName,
+    string imageColumnName,
+    int batchSize,
+    bool resizeBeforeUpload,
+    int maxResizeWidth,
+    IProgress<UploadProgressState> progress,
+    CancellationToken token)
         {
             var summary = new UploadSummaryResult { Total = items.Count };
             var sw = Stopwatch.StartNew();
@@ -40,14 +39,17 @@ namespace Dataverse.BulkImageUploader.Services
                 token.ThrowIfCancellationRequested();
 
                 var batch = items.Skip(i).Take(batchSize).ToList();
-                var tasks = batch.Select(async item =>
+
+                // Process each item sequentially
+                foreach (var item in batch)
                 {
                     try
                     {
-                        //byte[] imageBytes = await File.ReadAllBytesAsync(item.FilePath, token);
+                        // Read file synchronously
+                        byte[] imageBytes = File.ReadAllBytes(item.FilePath);
 
-                        byte[] imageBytes = await Task.Run(() => File.ReadAllBytes(item.FilePath), token);
-                        await _dataverseService.UploadImageRecordAsync(
+                        // Upload synchronously
+                        _dataverseService.UploadImageRecordsync(
                             entityName,
                             item.MatchingRecord.Id,
                             imageColumnName,
@@ -56,38 +58,104 @@ namespace Dataverse.BulkImageUploader.Services
                         );
 
                         item.Status = MappingStatus.Uploaded;
-                        Interlocked.Increment(ref summary.Succeeded);
+                        summary.Succeeded++;
                     }
                     catch (Exception ex)
                     {
                         item.Status = MappingStatus.Failed;
                         item.ErrorMessage = ex.Message;
-                        Interlocked.Increment(ref summary.Failed);
+                        summary.Failed++;
                         _logger?.Invoke($"Failed uploading {item.FileName}: {ex.Message}");
                     }
                     finally
                     {
-                        Interlocked.Increment(ref processed);
+                        processed++;
                     }
-                });
 
-                await Task.WhenAll(tasks);
+                    // Report progress after each item
+                    double speed = processed / Math.Max(1, sw.Elapsed.TotalSeconds);
+                    double remainingSecs = (items.Count - processed) / Math.Max(0.1, speed);
 
-                double speed = processed / Math.Max(1, sw.Elapsed.TotalSeconds);
-                double remainingSecs = (items.Count - processed) / Math.Max(0.1, speed);
-
-                progress?.Report(new UploadProgressState
-                {
-                    Total = items.Count,
-                    Processed = processed,
-                    PercentComplete = (int)((processed / (double)items.Count) * 100),
-                    SpeedFilesPerSec = speed,
-                    EstimatedRemainingTime = TimeSpan.FromSeconds(remainingSecs).ToString("mm':'ss")
-                });
+                    progress?.Report(new UploadProgressState
+                    {
+                        Total = items.Count,
+                        Processed = processed,
+                        PercentComplete = (int)((processed / (double)items.Count) * 100),
+                        SpeedFilesPerSec = speed,
+                        EstimatedRemainingTime = TimeSpan.FromSeconds(remainingSecs).ToString(@"mm\:ss")
+                    });
+                }
             }
 
             summary.Duration = sw.Elapsed;
             return summary;
         }
+        //public async Task<UploadSummaryResult> ProcessUploadAsync(
+        //    List<ImageMappingItem> items,
+        //    string entityName,
+        //    string imageColumnName,
+        //    int batchSize,
+        //    bool resizeBeforeUpload,
+        //    int maxResizeWidth,
+        //    IProgress<UploadProgressState> progress,
+        //    CancellationToken token)
+        //{
+        //    var summary = new UploadSummaryResult { Total = items.Count };
+        //    var sw = Stopwatch.StartNew();
+        //    int processed = 0;
+
+        //    for (int i = 0; i < items.Count; i += batchSize)
+        //    {
+        //        token.ThrowIfCancellationRequested();
+
+        //        var batch = items.Skip(i).Take(batchSize).ToList();
+        //        var tasks = batch.Select(async item =>
+        //        {
+        //            try
+        //            {
+        //                byte[] imageBytes = await Task.Run(() => File.ReadAllBytes(item.FilePath), token);
+
+        //                await _dataverseService.UploadImageRecordAsync(
+        //                    entityName,
+        //                    item.MatchingRecord.Id,
+        //                    imageColumnName,
+        //                    imageBytes,
+        //                    token
+        //                );
+
+        //                item.Status = MappingStatus.Uploaded;
+        //                Interlocked.Increment(ref summary.Succeeded);
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                item.Status = MappingStatus.Failed;
+        //                item.ErrorMessage = ex.Message;
+        //                Interlocked.Increment(ref summary.Failed);
+        //                _logger?.Invoke($"Failed uploading {item.FileName}: {ex.Message}");
+        //            }
+        //            finally
+        //            {
+        //                Interlocked.Increment(ref processed);
+        //            }
+        //        });
+
+        //        await Task.WhenAll(tasks);
+
+        //        double speed = processed / Math.Max(1, sw.Elapsed.TotalSeconds);
+        //        double remainingSecs = (items.Count - processed) / Math.Max(0.1, speed);
+
+        //        progress?.Report(new UploadProgressState
+        //        {
+        //            Total = items.Count,
+        //            Processed = processed,
+        //            PercentComplete = (int)((processed / (double)items.Count) * 100),
+        //            SpeedFilesPerSec = speed,
+        //            EstimatedRemainingTime = TimeSpan.FromSeconds(remainingSecs).ToString("mm':'ss")
+        //        });
+        //    }
+
+        //    summary.Duration = sw.Elapsed;
+        //    return summary;
+        //}
     }
 }

@@ -45,10 +45,30 @@ namespace Dataverse.BulkImageUploader.Services
             return allRecords;
         }
 
-        public async Task<bool> UploadImageRecordAsync(string entityName, Guid recordId, string imageColumnName, byte[] imageBytes, CancellationToken cancellationToken)
+        //public async Task<bool> UploadImageRecordAsync(string entityName, Guid recordId, string imageColumnName, byte[] imageBytes, CancellationToken cancellationToken)
+        //{
+        //    return await Task.Run(() =>
+        //    {
+        //        try
+        //        {
+        //            cancellationToken.ThrowIfCancellationRequested();
+
+        //            var updateEntity = new Entity(entityName, recordId);
+        //            updateEntity[imageColumnName] = imageBytes;
+
+        //            _service.Update(updateEntity);
+        //            return true;
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            _logger?.Invoke($"Error updating record {recordId}: {ex.Message}");
+        //            throw;
+        //        }
+        //    }, cancellationToken);
+        //}
+        public  bool UploadImageRecordsync(string entityName, Guid recordId, string imageColumnName, byte[] imageBytes, CancellationToken cancellationToken)
         {
-            return await Task.Run(() =>
-            {
+           
                 try
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -64,9 +84,8 @@ namespace Dataverse.BulkImageUploader.Services
                     _logger?.Invoke($"Error updating record {recordId}: {ex.Message}");
                     throw;
                 }
-            }, cancellationToken);
-        }
-
+            }
+        
         public async Task<ExecuteMultipleResponse> ExecuteBatchUploadAsync(ExecuteMultipleRequest batchRequest, CancellationToken token)
         {
             return await Task.Run(() =>

@@ -31,7 +31,7 @@ namespace Dataverse.BulkImageUploader.Services
 
             foreach (var metadata in response.EntityMetadata)
             {
-                if ( metadata.Attributes != null)
+                if (metadata.Attributes != null)
                 {
                     var imageAttrs = metadata.Attributes.OfType<ImageAttributeMetadata>().ToList();
                     if (imageAttrs.Any())

@@ -30,14 +30,28 @@ namespace Dataverse.BulkImageUploader
 
         public PluginControl()
         {
-            InitializeComponent();
+            try
+            {
+                InitializeComponent();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         private void PluginControl_Load(object sender, EventArgs e)
         {
-            ShowInfoNotification("Initializing Bulk Image Uploader Plugin...", new Uri("https://github.com/"));
-            LoadSettings();
-            ValidateConnection();
+            try
+            {
+                // ShowInfoNotification("Initializing Bulk Image Uploader Plugin...", new Uri("https://github.com/"));
+                LoadSettings();
+                ValidateConnection();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         private void ValidateConnection()
@@ -49,7 +63,7 @@ namespace Dataverse.BulkImageUploader
                 lblUserName.Text = ConnectionDetail.UserName;
                 lblOrgName.Text = ConnectionDetail.Organization;
 
-                _dataverseService = new DataverseService(Service, msg=> LogInfo(msg));
+                _dataverseService = new DataverseService(Service, msg => LogInfo(msg));
                 _metadataService = new MetadataService(Service);
                 _mappingEngine = new MappingEngine();
                 _imageProcessor = new ImageProcessor();
@@ -70,14 +84,14 @@ namespace Dataverse.BulkImageUploader
         public override void UpdateConnection(IOrganizationService newService, ConnectionDetail detail, string actionName, object parameter)
         {
             base.UpdateConnection(newService, detail, actionName, parameter);
-            
+
             if (detail != null)
             {
                 lblEnvName.Text = detail.ConnectionName;
                 lblEnvUrl.Text = detail.WebApplicationUrl;
                 lblUserName.Text = detail.UserName;
                 lblOrgName.Text = detail.Organization;
-                
+
                 _dataverseService = new DataverseService(Service, msg => LogInfo(msg));
                 _metadataService = new MetadataService(Service);
                 _mappingEngine = new MappingEngine();
@@ -158,7 +172,15 @@ namespace Dataverse.BulkImageUploader
                     }
 
                     _mappingItems = (List<ImageMappingItem>)args.Result;
-                    gridPreview.DataSource = _mappingItems;
+                    var matchedList = _mappingItems
+        .Where(x => x.Status == MappingStatus.Matched || x.Status == MappingStatus.ExistingImage)
+    .ToList();
+
+                    gridPreview.DataSource = matchedList.Any() ? matchedList : _mappingItems;
+                    this.gridPreview.BringToFront();
+                    this.gridPreview.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+
+                    // gridPreview.DataSource = _mappingItems;
                     UpdateSummaryCards();
                     LogInfo($"Preview generated: {_mappingItems.Count(x => x.Status == MappingStatus.Matched)} matched successfully.");
                 }
@@ -173,10 +195,10 @@ namespace Dataverse.BulkImageUploader
             int duplicates = _mappingItems.Count(x => x.Status == MappingStatus.Duplicate);
             int noMatch = _mappingItems.Count(x => x.Status == MappingStatus.NoMatch);
 
-            if (lblSummaryTotal != null) lblSummaryTotal.Text = total.ToString();
-            if (lblSummaryMatched != null) lblSummaryMatched.Text = matched.ToString();
-            if (lblSummaryDuplicates != null) lblSummaryDuplicates.Text = duplicates.ToString();
-            if (lblSummaryNoMatch != null) lblSummaryNoMatch.Text = noMatch.ToString();
+            if (lblSummaryTotal != null) lblSummaryTotal.Text = "Total Files:" + total.ToString();
+            if (lblSummaryMatched != null) lblSummaryMatched.Text = "Matched:" + matched.ToString();
+            if (lblSummaryDuplicates != null) lblSummaryDuplicates.Text = "Duplicate:" + duplicates.ToString();
+            if (lblSummaryNoMatch != null) lblSummaryNoMatch.Text = "No Match:" + noMatch.ToString();
         }
 
         private async void btnStartUpload_Click(object sender, EventArgs e)
@@ -192,34 +214,81 @@ namespace Dataverse.BulkImageUploader
             btnStartUpload.Enabled = false;
             btnCancel.Enabled = true;
 
-            var progress = new Progress<UploadProgressState>(ReportProgress);
+           // var progress = new Progress<UploadProgressState>(ReportProgress);
             var selectedTable = (EntityMetadataInfo)cmbTables.SelectedItem;
             var selectedImageCol = (string)cmbImageColumns.SelectedValue;
+            WorkAsync(new WorkAsyncInfo
+            {
+                Message = $"Uploading Images",
+                Work = (worker, args) =>
+                {
+                    var cts = new CancellationTokenSource();
+                    var progress = new Progress<UploadProgressState>(state =>
+                    {
+                        // Update the message via ReportProgress
+                        worker.ReportProgress(
+                            state.PercentComplete,
+                            $"{state.Processed} of {state.Total} items uploaded\n" +
+                            $"Speed: {state.SpeedFilesPerSec:F1} files/sec\n" +
+                            $"Remaining: {state.EstimatedRemainingTime}"
+                        );
+                    });
 
-            try
-            {
-                var summary = await _uploadEngine.ProcessUploadAsync(
-                    matchedItems,
-                    selectedTable.LogicalName,
-                    selectedImageCol,
-                    _settings.BatchSize,
-                    _settings.ResizeBeforeUpload,
-                    _settings.MaxResizeWidth,
-                    progress,
-                    _cts.Token
-                );
+                   
+                    var summary = _uploadEngine.ProcessUploadsync(
+                        _mappingItems,
+                        selectedTable.LogicalName,
+                        selectedImageCol,
+                        _settings.BatchSize,
+                         _settings.ResizeBeforeUpload,
+                        _settings.MaxResizeWidth,
+                        progress,
+                        cts.Token
+                    );  // Blocks the work thread, not the UI
 
-                MessageBox.Show($"Upload Complete! Succeeded: {summary.Succeeded}, Failed: {summary.Failed}", "Upload Summary", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (OperationCanceledException)
-            {
-                LogInfo("Upload process was cancelled by user.");
-            }
-            finally
-            {
-                btnStartUpload.Enabled = true;
-                btnCancel.Enabled = false;
-            }
+                    args.Result = summary;
+                },
+                ProgressChanged = (args) =>
+                {
+                    // The message in UserState gets displayed (if supported by your version)
+                    // But the progress bar updates for sure
+                },
+                PostWorkCallBack = (args) =>
+                {
+                    var summary = (UploadSummaryResult)args.Result;
+                    MessageBox.Show($"Upload completed: {summary.Succeeded} succeeded, {summary.Failed} failed");
+                    btnStartUpload.Enabled = true;
+                    btnCancel.Enabled = false;
+                    LogInfo($"Upload completed: {summary.Succeeded} succeeded, {summary.Failed} failed");
+                }
+            });
+
+            //try
+            //{
+            //    var summary = await _uploadEngine.ProcessUploadAsync(
+            //        matchedItems,
+            //        selectedTable.LogicalName,
+            //        selectedImageCol,
+            //        _settings.BatchSize,
+            //        _settings.ResizeBeforeUpload,
+            //        _settings.MaxResizeWidth,
+            //        progress,
+            //        _cts.Token
+            //    );
+
+
+
+            //    MessageBox.Show($"Upload Complete! Succeeded: {summary.Succeeded}, Failed: {summary.Failed}", "Upload Summary", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            //}
+            //catch (OperationCanceledException)
+            //{
+            //    LogInfo("Upload process was cancelled by user.");
+            //}
+            //finally
+            //{
+            //    btnStartUpload.Enabled = true;
+            //    btnCancel.Enabled = false;
+            //}
         }
 
         private void ReportProgress(UploadProgressState state)
@@ -252,12 +321,51 @@ namespace Dataverse.BulkImageUploader
             if (SettingsManager.Instance.TryLoad(GetType(), out _settings))
             {
                 numBatchSize.Value = _settings.BatchSize;
-                chkOverwrite.Checked = _settings.OverwriteExisting;
+                // chkOverwrite.Checked = _settings.OverwriteExisting;
             }
             else
             {
                 _settings = new PluginSettings();
             }
         }
+
+        private void cmbTables_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cmbTables.SelectedItem is EntityMetadataInfo selectedTable && _metadataService != null)
+            {
+                var imageAttrs = _metadataService.GetImageAttributes(selectedTable.LogicalName);
+                cmbImageColumns.DataSource = imageAttrs;
+                cmbImageColumns.DisplayMember = "DisplayName";
+                cmbImageColumns.ValueMember = "LogicalName";
+
+                var mappingFields = new List<MappingFieldOption>
+                {
+                    new MappingFieldOption { DisplayName = $"Primary ID ({selectedTable.PrimaryIdAttribute})", LogicalName = selectedTable.PrimaryIdAttribute },
+                    new MappingFieldOption { DisplayName = $"Primary Name ({selectedTable.PrimaryNameAttribute})", LogicalName = selectedTable.PrimaryNameAttribute }
+                };
+                cmbMappingFields.DataSource = mappingFields;
+                cmbMappingFields.DisplayMember = "DisplayName";
+                cmbMappingFields.ValueMember = "LogicalName";
+            }
+        }
+
+        private void btnBrowseFolder_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                if (dialog.ShowDialog() == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+                {
+                    txtFolderPath.Text = dialog.SelectedPath;
+                }
+            }
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            _cts?.Cancel();
+            LogInfo("Cancellation requested by user...");
+        }
+
+
     }
-} 
+}
