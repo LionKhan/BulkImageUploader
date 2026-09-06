@@ -5,9 +5,9 @@
 		<AssemblyName>OBE.XRMToolBox.BulkImageUploader</AssemblyName>
 		<RootNamespace>Dataverse.BulkImageUploader</RootNamespace>
 
-		<Version>1.0.6</Version>
-		<AssemblyVersion>1.0.6</AssemblyVersion>
-		<FileVersion>1.0.6</FileVersion>
+		<Version>1.0.7</Version>
+		<AssemblyVersion>1.0.7</AssemblyVersion>
+		<FileVersion>1.0.7</FileVersion>
 
 		<PackageId>OBE.XRMToolBox.BulkImageUploader</PackageId>
 		<Title>Bulk Image Uploader</Title>
